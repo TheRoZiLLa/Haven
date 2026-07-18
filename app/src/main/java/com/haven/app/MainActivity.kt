@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.haven.app.navigation.AppNavigation
 import com.haven.app.ui.theme.HavenTheme
 
 class MainActivity : ComponentActivity() {
@@ -16,7 +17,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             HavenTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    // TODO: Wire up navigation host
+                    AppNavigation()
                 }
             }
         }
