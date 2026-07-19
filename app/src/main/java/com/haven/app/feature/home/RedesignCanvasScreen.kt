@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 /**
  * Configuration for floating eco particles.
  */
+@Immutable
 data class ParticleConfig(
     val xOffset: Float,
     val startY: Float,
@@ -54,16 +55,16 @@ data class ParticleConfig(
  */
 @Composable
 fun RedesignCanvasScreen(
-    onNavigateToSettings: () -> Unit = {}
+    onNavigateToSettings: () -> Unit = {},
+    onStartTimer: (String, Int, Int, Boolean) -> Unit = { _, _, _, _ -> }
 ) {
     // ─── State Management ──────────────────────────────────────────────────
     var focusTime by remember { mutableStateOf(25) }
     var breakTime by remember { mutableStateOf(5) }
     var previousBreakTime by remember { mutableStateOf(breakTime) }
+    var isDebugModeEnabled by remember { mutableStateOf(false) }
 
     // ─── Animation States ──────────────────────────────────────────────────
-    val coroutineScope = rememberCoroutineScope()
-    
     // Sapling scale jump (spring)
     val saplingScaleAnim = remember { Animatable(1.0f) }
     
@@ -85,11 +86,13 @@ fun RedesignCanvasScreen(
         )
     }
 
-    // Trigger animations when breakTime is increased
+    // Trigger animations when breakTime is increased.
+    // Uses LaunchedEffect's own coroutine scope so all child launches are cancelled
+    // automatically when breakTime changes again — prevents animation stacking.
     LaunchedEffect(breakTime) {
         if (breakTime > previousBreakTime) {
             // Trigger sapling bouncy jump
-            coroutineScope.launch {
+            launch {
                 saplingScaleAnim.animateTo(
                     targetValue = 1.25f,
                     animationSpec = spring(
@@ -107,7 +110,7 @@ fun RedesignCanvasScreen(
             }
 
             // Trigger glowing pulse ring
-            coroutineScope.launch {
+            launch {
                 glowAlphaAnim.snapTo(0.8f)
                 glowScaleAnim.snapTo(1.0f)
                 launch {
@@ -125,7 +128,7 @@ fun RedesignCanvasScreen(
             }
 
             // Trigger floating leaf particles
-            coroutineScope.launch {
+            launch {
                 particleProgress.snapTo(0.0f)
                 particleProgress.animateTo(
                     targetValue = 1.0f,
@@ -157,14 +160,12 @@ fun RedesignCanvasScreen(
                 )
             )
     ) {
-        // 1. Bottom Illustration Decoration (bg_tree)
+        // 1. Background Illustration (bg_tree)
         Image(
             painter = painterResource(id = R.drawable.bg_tree),
             contentDescription = null,
-            contentScale = ContentScale.FillWidth,
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
 
         // 2. Main Content Layout (Non-scrollable)
@@ -180,23 +181,23 @@ fun RedesignCanvasScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(80.dp)
             ) {
-                // Menu Hamburger Button on Left
+                // Menu Hamburger Button on Left (toggles debug mode for prototype testing)
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = Color.White,
+                    color = if (isDebugModeEnabled) Color(0xFFFBE9E7) else Color.White,
                     shadowElevation = 2.dp,
                     modifier = Modifier
                         .size(48.dp)
                         .align(Alignment.CenterStart)
-                        .clickable { onNavigateToSettings() }
+                        .clickable { isDebugModeEnabled = !isDebugModeEnabled }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Rounded.Menu,
-                            contentDescription = "Menu",
-                            tint = ForestGreenDark,
+                            contentDescription = "Debug menu",
+                            tint = if (isDebugModeEnabled) Color(0xFFC62828) else ForestGreenDark,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -210,15 +211,15 @@ fun RedesignCanvasScreen(
                     Image(
                         painter = painterResource(id = R.drawable.logo_text),
                         contentDescription = "HAVEN",
-                        modifier = Modifier.height(34.dp),
+                        modifier = Modifier.height(56.dp),
                         contentScale = ContentScale.Fit
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Grow with every break",
+                        text = if (isDebugModeEnabled) "🌱 Debug Mode (10s session)" else "Grow with every break",
                         fontSize = 11.sp,
-                        color = MediumGray,
-                        fontWeight = FontWeight.Medium
+                        color = if (isDebugModeEnabled) Color(0xFFC62828) else MediumGray,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -293,34 +294,12 @@ fun RedesignCanvasScreen(
                     )
                 }
 
-                // Floating Eco Particles (Leaf particles drifting upward)
-                if (particleProgress.value > 0.0f && particleProgress.value < 1.0f) {
-                    val progress = particleProgress.value
-                    val alpha = if (progress < 0.2f) progress / 0.2f else (1.0f - progress) / 0.8f
-                    
-                    for (i in particles.indices) {
-                        val particle = particles[i]
-                        val currentY = (particle.startY + (particle.endY - particle.startY) * progress).dp
-                        val sway = (kotlin.math.sin(progress * Math.PI * 2 + i).toFloat() * 16f).dp
-                        val xOffset = (particle.xOffset).dp
-                        val size = (particle.size).dp
-                        
-                        Icon(
-                            imageVector = Icons.Rounded.Eco,
-                            contentDescription = null,
-                            tint = LeafGreen.copy(alpha = alpha),
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .offset(x = xOffset + sway, y = currentY)
-                                .size(size)
-                                .graphicsLayer {
-                                    rotationZ = progress * 240f + (i * 30)
-                                    scaleX = 1.0f - (progress * 0.2f)
-                                    scaleY = 1.0f - (progress * 0.2f)
-                                }
-                        )
-                    }
-                }
+                // Floating Eco Particles — scoped to its own composable so only
+                // FloatingParticles recomposes each frame, not the entire screen.
+                FloatingParticles(
+                    particleProgress = particleProgress,
+                    particles = particles
+                )
             }
 
             // ─── TIME CONFIGURATION CAPSULES ───
@@ -350,13 +329,13 @@ fun RedesignCanvasScreen(
 
             // ─── START CTA BUTTON ───
             Button(
-                onClick = { /* Handle timer start */ },
+                onClick = { onStartTimer("oak", focusTime, breakTime, isDebugModeEnabled) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(60.dp)
                     .scale(startButtonScale)
-                    .shadow(8.dp, RoundedCornerShape(20.dp), spotColor = ForestGreen),
-                shape = RoundedCornerShape(20.dp),
+                    .shadow(8.dp, RoundedCornerShape(40.dp), spotColor = ForestGreen),
+                shape = RoundedCornerShape(40.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF81C784),
                     contentColor = Color.White
@@ -403,7 +382,6 @@ fun TimeSelectorCapsule(
         color = Color.White,
         shadowElevation = 2.dp,
         modifier = modifier
-            .shadow(2.dp, RoundedCornerShape(40.dp), spotColor = WarmShadow)
             .border(1.dp, Color(0xFFE8EFE5), RoundedCornerShape(40.dp))
     ) {
         Column(
@@ -496,6 +474,49 @@ fun TimeSelectorCapsule(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = DarkText.copy(alpha = 0.8f)
+            )
+        }
+    }
+}
+
+/**
+ * Isolated composable for the floating eco-leaf particle burst.
+ *
+ * Scoping [particleProgress] reads here prevents the parent [RedesignCanvasScreen]
+ * from recomposing on every animation frame during the 1-second burst.
+ * [ParticleConfig] is annotated @Immutable so Compose treats the list as stable
+ * and skips re-creating particle objects during recomposition.
+ */
+@Composable
+private fun FloatingParticles(
+    particleProgress: Animatable<Float, AnimationVector1D>,
+    particles: List<ParticleConfig>
+) {
+    val progress = particleProgress.value
+    if (progress <= 0f || progress >= 1f) return
+
+    val alpha = if (progress < 0.2f) progress / 0.2f else (1.0f - progress) / 0.8f
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        for (i in particles.indices) {
+            val particle = particles[i]
+            val currentY = (particle.startY + (particle.endY - particle.startY) * progress).dp
+            val sway = (kotlin.math.sin(progress * Math.PI * 2 + i).toFloat() * 16f).dp
+            Icon(
+                imageVector = Icons.Rounded.Eco,
+                contentDescription = null,
+                tint = LeafGreen.copy(alpha = alpha),
+                modifier = Modifier
+                    .offset(x = particle.xOffset.dp + sway, y = currentY)
+                    .size(particle.size.dp)
+                    .graphicsLayer {
+                        rotationZ = progress * 240f + (i * 30)
+                        scaleX = 1.0f - (progress * 0.2f)
+                        scaleY = 1.0f - (progress * 0.2f)
+                    }
             )
         }
     }
