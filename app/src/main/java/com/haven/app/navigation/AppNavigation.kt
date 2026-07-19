@@ -1,13 +1,21 @@
 package com.haven.app.navigation
 
-import android.app.Application
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Alignment
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,7 +30,6 @@ import com.haven.app.feature.timer.AnimalOverlayDialog
 import com.haven.app.feature.timer.BreakSelectionScreen
 import com.haven.app.feature.timer.BreakCountdownScreen
 import com.haven.app.feature.timer.BreakCompleteScreen
-import com.haven.app.ui.theme.WarmWhite
 
 /**
  * App-level navigation routes.
@@ -42,7 +49,8 @@ object Routes {
 }
 
 /**
- * Root navigation host with scaffold + floating bottom navigation.
+ * Root navigation host with a bottom navigation overlay. The overlay lets the
+ * screen artwork remain visible through the floating glass surface.
  */
 @Composable
 fun AppNavigation() {
@@ -63,35 +71,19 @@ fun AppNavigation() {
     }
 
     // Screens that show the bottom nav
-    val showBottomNav = currentRoute in listOf(
-        Routes.FOREST, Routes.MISSIONS, Routes.SHOP, Routes.PROFILE
-    )
+    val showBottomNav = currentRoute in listOf(Routes.HOME, Routes.FOREST, Routes.SETTINGS)
 
-    Scaffold(
-        containerColor = WarmWhite,
-        bottomBar = {
-            if (showBottomNav) {
-                HavenBottomNav(
-                    currentRoute = currentRoute,
-                    onNavigate   = { route ->
-                        navController.navigate(route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState    = true
-                        }
-                    }
-                )
-            }
-        }
-    ) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController    = navController,
             startDestination = Routes.HOME,
-            modifier         = if (showBottomNav) Modifier.padding(innerPadding) else Modifier
+            modifier         = Modifier.fillMaxSize()
         ) {
-            composable(Routes.HOME) {
+            composable(
+                route = Routes.HOME,
+                enterTransition = { fadeIn(tween(250)) + slideInHorizontally(tween(350)) { -it / 10 } },
+                exitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(250)) { -it / 12 } }
+            ) {
                 RedesignCanvasScreen(
                     onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                     onStartTimer = { seedId, focusTime, breakTime, isDebug ->
@@ -100,11 +92,19 @@ fun AppNavigation() {
                 )
             }
 
-            composable(Routes.SETTINGS) {
+            composable(
+                route = Routes.SETTINGS,
+                enterTransition = { fadeIn(tween(250)) + slideInHorizontally(tween(350)) { it / 10 } },
+                exitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(250)) { it / 12 } }
+            ) {
                 PlaceholderScreen(label = "⚙️ Settings\n\nComing soon")
             }
 
-            composable(Routes.FOREST) {
+            composable(
+                route = Routes.FOREST,
+                enterTransition = { fadeIn(tween(250)) + slideInHorizontally(tween(350)) { it / 12 } },
+                exitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(250)) { -it / 12 } }
+            ) {
                 PlaceholderScreen(label = "🌲 Forest\n\nComing soon")
             }
 
@@ -196,6 +196,35 @@ fun AppNavigation() {
                     }
                 )
             }
+        }
+
+        AnimatedVisibility(
+            visible = showBottomNav,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding(),
+            enter = slideInVertically(
+                animationSpec = tween(360, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                initialOffsetY = { it }
+            ) + fadeIn(animationSpec = tween(220)),
+            exit = slideOutVertically(
+                animationSpec = tween(280, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                targetOffsetY = { it }
+            ) + fadeOut(animationSpec = tween(180))
+        ) {
+            HavenBottomNav(
+                currentRoute = currentRoute,
+                onNavigate = { route ->
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                modifier = Modifier
+            )
         }
     }
 }
