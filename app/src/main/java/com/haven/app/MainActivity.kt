@@ -18,6 +18,18 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val ACTION_BREAK_SELECTION = "com.haven.app.ACTION_BREAK_SELECTION"
         const val EXTRA_GOTO_BREAK_SELECTION = "EXTRA_GOTO_BREAK_SELECTION"
+        
+        var isAppInForeground = false
+    }
+
+    override fun onStart() {
+        super.onStart()
+        isAppInForeground = true
+    }
+
+    override fun onStop() {
+        super.onStop()
+        isAppInForeground = false
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -231,8 +231,13 @@ class FocusService : Service() {
     private fun onTimerFinished() {
         stopTicker()
 
-        // Open Animal Overlay on top of all apps via OverlayService
-        OverlayService.start(this)
+        if (MainActivity.isAppInForeground) {
+            // Navigate directly to break selection screen in-app
+            NavigationTarget.pendingRoute = "${Routes.BREAK_SELECTION}/$breakTimeMinutes"
+        } else {
+            // Open Animal Overlay on top of all apps via OverlayService
+            OverlayService.start(this)
+        }
 
         stopSelf()
     }

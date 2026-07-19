@@ -1,6 +1,8 @@
 package com.haven.app.navigation
 
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,11 +13,14 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -30,6 +35,9 @@ import com.haven.app.feature.timer.AnimalOverlayDialog
 import com.haven.app.feature.timer.BreakSelectionScreen
 import com.haven.app.feature.timer.BreakCountdownScreen
 import com.haven.app.feature.timer.BreakCompleteScreen
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.withContext
 
 /**
  * App-level navigation routes.
@@ -55,6 +63,7 @@ object Routes {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val predictiveNavReveal = remember { Animatable(0f) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route ?: Routes.HOME
 
@@ -62,7 +71,7 @@ fun AppNavigation() {
     LaunchedEffect(NavigationTarget.pendingRoute) {
         NavigationTarget.pendingRoute?.let { route ->
             navController.navigate(route) {
-                if (route == Routes.ANIMAL_OVERLAY) {
+                if (route == Routes.ANIMAL_OVERLAY || route.startsWith(Routes.BREAK_SELECTION)) {
                     popUpTo(Routes.HOME) { inclusive = false }
                 }
             }
@@ -72,6 +81,22 @@ fun AppNavigation() {
 
     // Screens that show the bottom nav
     val showBottomNav = currentRoute in listOf(Routes.HOME, Routes.FOREST, Routes.SETTINGS)
+    val isFocusTimer = currentRoute.startsWith("${Routes.TIMER}/")
+
+    // While an Android predictive-back gesture is in progress from the focus
+    // timer, reveal the Timer tab in sync with the user's swipe.
+    PredictiveBackHandler(enabled = isFocusTimer) { progressEvents ->
+        try {
+            progressEvents.collect { event ->
+                predictiveNavReveal.snapTo(event.progress)
+            }
+            navController.popBackStack()
+        } finally {
+            withContext(NonCancellable) {
+                predictiveNavReveal.snapTo(0f)
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
@@ -152,6 +177,10 @@ fun AppNavigation() {
                         navController.navigate("${Routes.BREAK_SELECTION}/$breakTime") {
                             popUpTo(Routes.HOME) { inclusive = false }
                         }
+                    },
+                    onDismiss = {
+                        // User swiped the animal away — skip the break and return home
+                        navController.popBackStack(Routes.HOME, inclusive = false)
                     }
                 )
             }
@@ -199,10 +228,11 @@ fun AppNavigation() {
         }
 
         AnimatedVisibility(
-            visible = showBottomNav,
+            visible = showBottomNav || predictiveNavReveal.value > 0f,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .offset(y = if (showBottomNav) 0.dp else 96.dp * (1f - predictiveNavReveal.value)),
             enter = slideInVertically(
                 animationSpec = tween(360, easing = androidx.compose.animation.core.FastOutSlowInEasing),
                 initialOffsetY = { it }
