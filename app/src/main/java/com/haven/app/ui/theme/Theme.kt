@@ -3,6 +3,10 @@ package com.haven.app.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalView
+import android.app.Activity
+import androidx.core.view.WindowCompat
 
 // HAVEN always uses light theme — warm, nature-forward palette
 private val HavenColorScheme = lightColorScheme(
@@ -39,6 +43,15 @@ private val HavenColorScheme = lightColorScheme(
 
 @Composable
 fun HavenTheme(content: @Composable () -> Unit) {
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true
+        }
+    }
+
     MaterialTheme(
         colorScheme = HavenColorScheme,
         typography  = HavenTypography,

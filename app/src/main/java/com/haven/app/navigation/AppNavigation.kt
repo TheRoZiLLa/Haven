@@ -15,6 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.haven.app.feature.home.HomeScreen
+import com.haven.app.feature.home.RedesignCanvasScreen
 import com.haven.app.ui.theme.WarmWhite
 import android.app.Application
 import androidx.compose.ui.platform.LocalContext
@@ -53,7 +54,7 @@ fun AppNavigation() {
 
     // Screens that show the bottom nav
     val showBottomNav = currentRoute in listOf(
-        Routes.HOME, Routes.FOREST, Routes.MISSIONS, Routes.SHOP, Routes.PROFILE
+        Routes.FOREST, Routes.MISSIONS, Routes.SHOP, Routes.PROFILE
     )
 
     Scaffold(
@@ -78,19 +79,11 @@ fun AppNavigation() {
         NavHost(
             navController    = navController,
             startDestination = Routes.HOME,
-            modifier         = Modifier.padding(innerPadding)
+            modifier         = if (showBottomNav) Modifier.padding(innerPadding) else Modifier
         ) {
             composable(Routes.HOME) {
-                val homeViewModel: HomeViewModel = viewModel(
-                    factory = HomeViewModelFactory(application, repository)
-                )
-                HomeScreen(
-                    viewModel = homeViewModel,
-                    onNavigateToForest   = { navController.navigate(Routes.FOREST) },
-                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
-                    onStartSession       = { seedSlot, focusTime, breakTime -> 
-                        navController.navigate("${Routes.TIMER}/${seedSlot.seedType.id}/$focusTime/$breakTime") 
-                    }
+                RedesignCanvasScreen(
+                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS) }
                 )
             }
 
