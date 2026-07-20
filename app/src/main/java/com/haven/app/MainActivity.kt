@@ -8,6 +8,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import com.haven.app.navigation.AppNavigation
 import com.haven.app.navigation.NavigationTarget
 import com.haven.app.navigation.Routes
@@ -37,9 +39,23 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
         enableEdgeToEdge()
         setContent {
-            HavenTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    AppNavigation()
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val repository = remember { com.haven.app.core.data.OnboardingRepository(context.applicationContext) }
+            val languageState = repository.appLanguageFlow.collectAsState(initial = "en")
+            val language = languageState.value
+
+            val wrappedContext = remember(language) {
+                com.haven.app.core.util.LocaleHelper.wrapContext(context, language)
+            }
+
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalContext provides wrappedContext,
+                androidx.activity.compose.LocalActivityResultRegistryOwner provides (context as ComponentActivity)
+            ) {
+                HavenTheme {
+                    Surface(modifier = Modifier.fillMaxSize()) {
+                        AppNavigation()
+                    }
                 }
             }
         }

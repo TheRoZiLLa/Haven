@@ -1,3 +1,30 @@
 <resources>
     <string name="app_name">Haven</string>
+    
+    <!-- Onboarding Story Intro Strings -->
+    <string name="intro_scene1_text1">Long ago...</string>
+    <string name="intro_scene1_text2">This world was filled with forests, rivers, and countless living creatures.</string>
+    <string name="intro_scene2_text1">But one day...</string>
+    <string name="intro_scene2_text2">Everything disappeared.</string>
+    <string name="intro_scene2_text3">No one knows what happened.</string>
+    <string name="intro_scene3_text1">The forests withered.</string>
+    <string name="intro_scene3_text2">The animals vanished.</string>
+    <string name="intro_scene3_text3">The world fell silent.</string>
+    <string name="intro_scene4_text1">Only a single Seed of Life remained.</string>
+    <string name="intro_scene4_text2">They say...</string>
+    <string name="intro_scene4_text3">Every tree that grows restores a forgotten memory.</string>
+    <string name="intro_scene4_text4">Perhaps...</string>
+    <string name="intro_scene4_text5">The truth is waiting to be found.</string>
+    <string name="intro_skip_content_desc">Skip story intro</string>
+    <string name="intro_tap_to_continue_label">Continue story</string>
+    <string name="intro_tap_anywhere_hint">Tap anywhere to continue</string>
+
+    <!-- Settings Screen Strings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_category_story">Story &amp; Onboarding</string>
+    <string name="settings_replay_intro_title">Replay Story Intro</string>
+    <string name="settings_replay_intro_desc">Watch the cinematic opening sequence again</string>
+    <string name="settings_category_general">General Settings</string>
+    <string name="settings_language_title">App Language</string>
+    <string name="settings_language_desc">Toggle app language between English and Thai</string>
 </resources>

@@ -38,11 +38,21 @@ import com.haven.app.feature.timer.BreakCompleteScreen
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.background
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import com.haven.app.core.data.OnboardingRepository
+import com.haven.app.feature.onboarding.IntroScreen
+import com.haven.app.feature.settings.SettingsScreen
+import kotlinx.coroutines.flow.first
 
 /**
  * App-level navigation routes.
  */
 object Routes {
+    const val INTRO           = "intro"
     const val HOME            = "home"
     const val FOREST          = "forest"
     const val MISSIONS        = "missions"
@@ -62,6 +72,14 @@ object Routes {
  */
 @Composable
 fun AppNavigation() {
+    val context = LocalContext.current.applicationContext
+    val onboardingRepository = remember { OnboardingRepository(context) }
+    var hasSeenIntro by remember { mutableStateOf<Boolean?>(null) }
+
+    LaunchedEffect(Unit) {
+        hasSeenIntro = onboardingRepository.hasSeenIntroFlow.first()
+    }
+
     val navController = rememberNavController()
     val predictiveNavReveal = remember { Animatable(0f) }
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -98,12 +116,29 @@ fun AppNavigation() {
         }
     }
 
+    if (hasSeenIntro == null) {
+        // Safe lightweight startup delay. Return empty Box matching the window's warm-white
+        // to prevent flicker while loading the first preference value.
+        Box(modifier = Modifier.fillMaxSize().background(Color(0xFFFAFAF5)))
+        return
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController    = navController,
-            startDestination = Routes.HOME,
+            startDestination = if (hasSeenIntro == true) Routes.HOME else Routes.INTRO,
             modifier         = Modifier.fillMaxSize()
         ) {
+            composable(Routes.INTRO) {
+                IntroScreen(
+                    onFinished = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.INTRO) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(
                 route = Routes.HOME,
                 enterTransition = { fadeIn(tween(250)) + slideInHorizontally(tween(350)) { -it / 10 } },
@@ -122,7 +157,16 @@ fun AppNavigation() {
                 enterTransition = { fadeIn(tween(250)) + slideInHorizontally(tween(350)) { it / 10 } },
                 exitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(250)) { it / 12 } }
             ) {
-                PlaceholderScreen(label = "⚙️ Settings\n\nComing soon")
+                SettingsScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onReplayIntro = {
+                        navController.navigate(Routes.INTRO) {
+                            popUpTo(Routes.HOME) { inclusive = false }
+                        }
+                    }
+                )
             }
 
             composable(
@@ -211,7 +255,8 @@ fun AppNavigation() {
                         navController.popBackStack(Routes.HOME, inclusive = false)
                     },
                     onComplete = {
-                        navController.navigate(Routes.BREAK_COMPLETE) {
+                        // Break is done — go back to choose-break screen
+                        navController.navigate("${Routes.BREAK_SELECTION}/$breakTime") {
                             popUpTo(Routes.HOME) { inclusive = false }
                         }
                     }

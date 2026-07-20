@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Haven</string>
+    
+    <!-- Onboarding Story Intro Strings (Thai) -->
+    <string name="intro_scene1_text1">กาลครั้งหนึ่งนานมาแล้ว...</string>
+    <string name="intro_scene1_text2">โลกใบนี้เคยเต็มไปด้วยป่าไม้ แม่น้ำ และสิ่งมีชีวิตนับไม่ถ้วน</string>
+    <string name="intro_scene2_text1">แต่ทว่าวันหนึ่ง...</string>
+    <string name="intro_scene2_text2">ทุกสิ่งทุกอย่างกลับสูญหายไป</string>
+    <string name="intro_scene2_text3">ไม่มีใครรู้ว่าเกิดอะไรขึ้น</string>
+    <string name="intro_scene3_text1">ผืนป่าเหี่ยวเฉา</string>
+    <string name="intro_scene3_text2">สัตว์ป่าหายสาบสูญ</string>
+    <string name="intro_scene3_text3">โลกตกอยู่ในความเงียบงัน</string>
+    <string name="intro_scene4_text1">เหลือเพียงเมล็ดพันธุ์แห่งชีวิตเพียงหนึ่งเดียวเท่านั้น</string>
+    <string name="intro_scene4_text2">พวกเขากล่าวว่า...</string>
+    <string name="intro_scene4_text3">ต้นไม้ทุกต้นที่เติบโตจะช่วยฟื้นฟูความทรงจำที่สาบสูญ</string>
+    <string name="intro_scene4_text4">บางที...</string>
+    <string name="intro_scene4_text5">ความจริงอาจกำลังรอให้ค้นพบ</string>
+    <string name="intro_skip_content_desc">ข้ามเรื่องราวแนะนำ</string>
+    <string name="intro_tap_to_continue_label">ดำเนินเรื่องราวต่อ</string>
+    <string name="intro_tap_anywhere_hint">แตะที่ใดก็ได้เพื่อดำเนินต่อ</string>
+
+    <!-- Settings Screen Strings (Thai) -->
+    <string name="settings_title">การตั้งค่า</string>
+    <string name="settings_category_story">เนื้อเรื่องและการเริ่มใช้งาน</string>
+    <string name="settings_replay_intro_title">เล่นเนื้อเรื่องนำทางอีกครั้ง</string>
+    <string name="settings_replay_intro_desc">รับชมภาพยนตร์เปิดตัวอีกครั้ง</string>
+    <string name="settings_category_general">การตั้งค่าทั่วไป</string>
+    <string name="settings_language_title">ภาษาของแอป</string>
+    <string name="settings_language_desc">สลับภาษาของแอปเป็นภาษาอังกฤษหรือภาษาไทย</string>
+</resources>

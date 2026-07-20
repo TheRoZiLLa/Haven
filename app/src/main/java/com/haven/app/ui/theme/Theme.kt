@@ -7,6 +7,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalView
 import android.app.Activity
 import androidx.core.view.WindowCompat
+import com.haven.app.core.util.findActivity
 
 // HAVEN always uses light theme — warm, nature-forward palette
 private val HavenColorScheme = lightColorScheme(
@@ -46,9 +47,12 @@ fun HavenTheme(content: @Composable () -> Unit) {
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true
+            val activity = view.context.findActivity()
+            if (activity != null) {
+                val window = activity.window
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true
+            }
         }
     }
 

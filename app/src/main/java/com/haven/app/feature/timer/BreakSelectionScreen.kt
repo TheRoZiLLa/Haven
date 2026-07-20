@@ -194,18 +194,8 @@ fun BreakSelectionScreen(
                 }
             }
 
-            // Cancel / Exit button at bottom
-            TextButton(
-                onClick = onCancel,
-                colors = ButtonDefaults.textButtonColors(contentColor = MediumGray),
-                modifier = Modifier.padding(bottom = 24.dp)
-            ) {
-                Text(
-                    text = "Cancel session",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            // Bottom spacer (keeps SpaceBetween layout balanced)
+            Spacer(modifier = Modifier.padding(bottom = 24.dp))
         }
     }
 }

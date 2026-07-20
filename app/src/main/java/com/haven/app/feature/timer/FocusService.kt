@@ -169,7 +169,15 @@ class FocusService : Service() {
         _totalSecondsFlow.value = totalSeconds
         _remainingSecondsFlow.value = remainingSeconds
 
-        startForeground(NOTIFICATION_ID, buildTimerNotification())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIFICATION_ID,
+                buildTimerNotification(),
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, buildTimerNotification())
+        }
         
         startTickerLoop()
     }

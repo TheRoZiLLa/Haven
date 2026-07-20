@@ -131,23 +131,28 @@ fun BreakCountdownScreen(
                 )
             }
 
-            // Cancel / Exit Button
-            Surface(
-                shape = CircleShape,
-                color = Color.White,
-                shadowElevation = 4.dp,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clickable { onCancel() }
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Cancel break",
-                        tint = MediumGray,
-                        modifier = Modifier.size(28.dp)
-                    )
+            // Cancel / Exit Button — hidden once the countdown finishes
+            if (remainingSeconds > 0) {
+                Surface(
+                    shape = CircleShape,
+                    color = Color.White,
+                    shadowElevation = 4.dp,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clickable { onCancel() }
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Cancel break",
+                            tint = MediumGray,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
+            } else {
+                // Placeholder keeps the SpaceBetween layout stable during the final frame
+                Spacer(modifier = Modifier.size(64.dp))
             }
         }
     }

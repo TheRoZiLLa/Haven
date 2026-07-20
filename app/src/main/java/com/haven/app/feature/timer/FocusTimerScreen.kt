@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.haven.app.core.util.findActivity
 import com.haven.app.ui.theme.*
 
 /**
@@ -65,7 +66,13 @@ fun FocusTimerScreen(
                 android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:${context.packageName}")
             )
-            context.startActivity(intent)
+            val activity = context.findActivity()
+            if (activity != null) {
+                activity.startActivity(intent)
+            } else {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            }
         }
 
         // 2. Request notification permission & start service
@@ -87,7 +94,7 @@ fun FocusTimerScreen(
 
     // Keep screen awake during session
     DisposableEffect(Unit) {
-        val activity = context as? Activity
+        val activity = context.findActivity()
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         onDispose {
             activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
